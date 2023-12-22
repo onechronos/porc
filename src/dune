@@ -1,0 +1,3 @@
+(executable (name porc)
+ (libraries atd jane_rope cmdliner)
+)

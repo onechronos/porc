@@ -1,0 +1,20 @@
+type a = float list
+type b = int option
+type c = { x : int; y : string }
+type d = [
+  | A of bool
+  | B of float
+]
+type e = (int * float)
+type f = e
+type 'a g = [ Apple of 'a | Dell of d ]
+type h = int g
+type i = int
+type sexpr = [
+  | Atom of string
+  | List of sexpr list
+]
+type tree = [
+  | Leaf of float
+  | Node of (tree * float * tree)
+] 
