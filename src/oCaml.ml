@@ -2,8 +2,13 @@ open Atd.Ast
 open Common
 
 let rec r_full_module (_, module_body) =
+  (* needed to support list *)
+  let open_module = v "open Bin_prot.Std" in
+
   (* body's items are separated by two newlines *)
-  Rope.concat ~sep:(v "\n\n") (r_module_body module_body)
+  let body = Rope.concat ~sep:(v "\n") (r_module_body module_body) in
+
+  open_module ^ v "\n" ^ body
 
 and r_module_body module_body =
   (* body contains a number of items *)
@@ -22,7 +27,7 @@ and r_item (Type type_def) =
       v "(" ^ Rope.concat ~sep:(v ",") tick_params ^ v ")"
   in
   let expr = r_type_expr type_expr in
-  v "type " ^ type_params ^ v name ^ v "=" ^ expr ^ v "[@@deriving bin_prot]"
+  v "type " ^ type_params ^ v name ^ v "=" ^ expr ^ v "[@@deriving bin_io]"
 
 and r_type_expr type_expr =
   match type_expr with
