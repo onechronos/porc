@@ -2,12 +2,15 @@ open Atd.Ast
 open Common
 
 let rec r_full_module (_, body) =
+  (* auto-generation comment *)
+  let comment = v "(* auto-generatoed by porc -- DO NOT EDIT *)" in
+
   (* needed to support list *)
   let open_module = v "open Bin_prot.Std" in
 
   let bodies = Atd.Util.tsort body in
   let bodies = List.map r_body bodies in
-  Rope.concat ~sep:(v "\n") (open_module :: bodies)
+  Rope.concat ~sep:(v "\n") (comment :: open_module :: bodies)
 
 and r_body (is_recursive, body) =
   Rope.concat ~sep:(v "\n") (r_items is_recursive body)
