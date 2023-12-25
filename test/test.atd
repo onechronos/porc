@@ -1,15 +1,19 @@
 type a = float list
-type b = int option
+type b = a option
 type c = { x : int; y : string }
 type d = [
   | A of bool
-  | B of float
+  | B of b
 ]
 type e = (int * float)
 type f = e
 type 'a g = [ Apple of 'a | Dell of d ]
 type h = int g
 type i = int
+type m = {
+  h : h;
+  fg : float g
+}
 type sexpr = [
   | Atom of string
   | List of sexpr list
