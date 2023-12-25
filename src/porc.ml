@@ -16,7 +16,7 @@ let read_all =
     loop buf ch;
     Buffer.contents buf
 
-let run rope_of_atd input_path output_path formatter =
+let run rope_of_atd input_path output_path formatter_and_args =
   (* open an input file (or just use [stdin]) *)
   let input_ch =
     match input_path with
@@ -35,14 +35,16 @@ let run rope_of_atd input_path output_path formatter =
 
   (* optionally format the code using an external formatting program *)
   let formatted_code =
-    match formatter with
+    match formatter_and_args with
     | None -> code
-    | Some formatter ->
-      let in_ch, out_ch = Unix.open_process formatter in
+    | Some (formatter, formatter_args) ->
+      let formatter_args_0 = Array.of_list (formatter :: formatter_args) in
+      let in_ch, out_ch = Unix.open_process_args formatter formatter_args_0 in
       output_string out_ch code;
       close_out out_ch;
       read_all in_ch
   in
+
   match output_path with
   | None -> print_endline formatted_code
   | Some path ->
@@ -52,8 +54,12 @@ let run rope_of_atd input_path output_path formatter =
 
 let main lang input_path output_path =
   match lang with
-  | `Rust -> run Rust.r_full_module input_path output_path (Some "rustfmt")
-  | `OCaml -> run OCaml.r_full_module input_path output_path (Some "ocamlformat")
+  | `Rust ->
+    run Rust.r_full_module input_path output_path
+      (Some ("rustfmt", [ "--emit"; "stdout" ]))
+  | `OCaml ->
+    run OCaml.r_full_module input_path output_path
+      (Some ("ocamlformat", [ "-"; "--impl" ]))
 
 open Cmdliner
 
