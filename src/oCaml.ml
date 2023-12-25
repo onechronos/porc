@@ -1,20 +1,28 @@
 open Atd.Ast
 open Common
 
-let rec r_full_module (_, module_body) =
+let rec r_full_module (_, body) =
   (* needed to support list *)
   let open_module = v "open Bin_prot.Std" in
 
-  (* body's items are separated by two newlines *)
-  let body = Rope.concat ~sep:(v "\n") (r_module_body module_body) in
+  let bodies = Atd.Util.tsort body in
+  let bodies = List.map r_body bodies in
+  Rope.concat ~sep:(v "\n") (open_module :: bodies)
 
-  open_module ^ v "\n" ^ body
+and r_body (is_recursive, body) =
+  Rope.concat ~sep:(v "\n") (r_items is_recursive body)
 
-and r_module_body module_body =
+and r_items is_recursive items =
   (* body contains a number of items *)
-  List.map r_item module_body
+  match (is_recursive, items) with
+  | _, [] -> assert false
+  | false, _ -> List.map (r_item true) items
+  | true, item_h :: item_t ->
+    let h = r_item true item_h in
+    let t = List.map (r_item false) item_t in
+    h :: t
 
-and r_item (Type type_def) =
+and r_item is_first (Type type_def) =
   (* an item is a type definition *)
   let _, (name, type_params, _), type_expr = type_def in
   (* type parameters, as they appear in the left-hand side alongside the name of
@@ -27,7 +35,9 @@ and r_item (Type type_def) =
       v "(" ^ Rope.concat ~sep:(v ",") tick_params ^ v ")"
   in
   let expr = r_type_expr type_expr in
-  v "type " ^ type_params ^ v name ^ v "=" ^ expr ^ v "[@@deriving bin_io]"
+  let type_keyword = match is_first with true -> "type" | false -> "and" in
+  v type_keyword ^ v " " ^ type_params ^ v name ^ v "=" ^ expr
+  ^ v "[@@deriving bin_io]"
 
 and r_type_expr type_expr =
   match type_expr with
@@ -37,7 +47,7 @@ and r_type_expr type_expr =
   | List (_, type_expr, _) -> v "(" ^ r_type_expr type_expr ^ v ") list"
   | Option (_, type_expr, _) -> v "(" ^ r_type_expr type_expr ^ v ") option"
   | Name (_, name_te, _) -> r_name name_te
-  | Tvar (_, tvar) -> v tvar
+  | Tvar (_, tvar) -> v "'" ^ v tvar
   | Nullable _ | Shared _ | Wrap _ -> assert false
 
 and r_sum variants =

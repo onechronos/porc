@@ -52,14 +52,22 @@ let run rope_of_atd input_path output_path formatter_and_args =
     output_string output_ch formatted_code;
     close_out output_ch
 
-let main lang input_path output_path =
-  match lang with
-  | `Rust ->
-    run Rust.r_full_module input_path output_path
-      (Some ("rustfmt", [ "--emit"; "stdout" ]))
-  | `OCaml ->
-    run OCaml.r_full_module input_path output_path
-      (Some ("ocamlformat", [ "-"; "--impl" ]))
+let main lang input_path output_path disable_formatting =
+  let code_of_atd =
+    match lang with
+    | `Rust -> Rust.r_full_module
+    | `OCaml -> OCaml.r_full_module
+  in
+  let formatter =
+    match disable_formatting with
+    | true -> None
+    | false -> (
+      match lang with
+      | `Rust -> Some ("rustfmt", [ "--emit"; "stdout" ])
+      | `OCaml -> Some ("ocamlformat", [ "-"; "--impl" ])
+    )
+  in
+  run code_of_atd input_path output_path formatter
 
 open Cmdliner
 
@@ -97,7 +105,15 @@ let _ =
         & info [ "l"; "lang" ] ~docv:"LANG" ~doc
       )
     in
+    let disable_formatting =
+      let doc =
+        "disable formatting by the (language-appropriate) external formatting \
+         program (enabled by default) "
+      in
+      Arg.(value & flag & info [ "f"; "disable-formatting" ] ~doc)
+    in
+
     Cmd.v (Cmd.info "porc" ~doc)
-      Term.(const main $ lang $ input_path $ output_path)
+      Term.(const main $ lang $ input_path $ output_path $ disable_formatting)
   in
   Cmd.eval ~catch:false cmd

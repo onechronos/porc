@@ -18,3 +18,6 @@ type tree = [
   | Leaf of float
   | Node of (tree * float * tree)
 ] 
+
+type j = [ I of int | K of k ]
+type k = [ S of string | J of j ]
