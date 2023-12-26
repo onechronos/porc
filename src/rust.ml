@@ -92,63 +92,62 @@ and r_item name_to_def_map (Type type_def) =
      to support the identification of recursive types whose Rust instantiation
      must be Box'd. The second argument is a flag denoting whether the type
      instance has a [list] (translated to Vec) ancestor. *)
-  let expr = r_type_expr name_to_def_map false type_expr in
+  let expr = r_type_expr 0 name_to_def_map false type_expr in
 
   (* attributes necessary to trigger bin-prot deriving functions *)
   let attribute = v "#[derive(BinProtRead, BinProtWrite, Debug, PartialEq)]" in
-
+  let camel_name = v (to_camel_case name) in
   match type_expr with
   | Sum _ ->
     (* e.g. translate {[ let x = [ A | B ] ]} to {[ pub enum X(A,B,) ]} *)
-    attribute ^ v "\n" ^ v "pub enum" ^ v " "
-    ^ v (to_camel_case name)
-    ^ type_params ^ expr
+    attribute ^ v "\n" ^ v "pub enum" ^ v " " ^ camel_name ^ type_params ^ expr
   | Record _ ->
     (* e.g. translate {[ type x = { y : int } ]} to {[ pub struct X { y : i64, }
        ]} *)
-    attribute ^ v "\n" ^ v "pub struct" ^ v " "
-    ^ v (to_camel_case name)
-    ^ type_params ^ expr
+    attribute ^ v "\n" ^ v "pub struct" ^ v " " ^ camel_name ^ type_params
+    ^ expr
   | Tuple _ ->
     (* e.g. translate {[ type x = (int * float) ]} to {[ pub struct X(i64,f64);
        ]} *)
-    attribute ^ v "\n" ^ v "pub struct" ^ v " "
-    ^ v (to_camel_case name)
-    ^ type_params ^ expr ^ v ";"
+    attribute ^ v "\n" ^ v "pub struct" ^ v " " ^ camel_name ^ type_params
+    ^ expr ^ v ";"
   | Option _
   (* e.g. translate {[ type x = int option ]} to {[ type X = Option<i64>; ]} *)
   | Name _
   (* e.g. translate {[ type x = int y ]} to {[ type X = Y<i64>; ]} *)
   | List _
   (* e.g. translate {[ type x = int list ]} to {[ type X = Vec<i64>; ]} *) ->
-    v "pub type" ^ v " "
-    ^ v (to_camel_case name)
-    ^ type_params ^ v "=" ^ expr ^ v ";"
+    v "pub type" ^ v " " ^ camel_name ^ type_params ^ v "=" ^ expr ^ v ";"
   | Tvar _ -> assert false
   | Nullable _ -> raise (NotSupported "nullable")
   | Shared _ -> raise (NotSupported "shared")
   | Wrap _ -> raise (NotSupported "wrap")
 
-and r_type_expr name_to_def_map ancestor_is_list type_expr =
+and r_type_expr depth name_to_def_map ancestor_is_list type_expr =
   match type_expr with
   | Sum (_, variants, _) ->
-    v "{" ^ r_sum name_to_def_map ancestor_is_list variants ^ v "}"
+    v "{" ^ r_sum depth name_to_def_map ancestor_is_list variants ^ v "}"
   | Record (_, fields, _) ->
-    v "{" ^ r_record name_to_def_map ancestor_is_list fields ^ v "}"
+    v "{" ^ r_record depth name_to_def_map ancestor_is_list fields ^ v "}"
   | Tuple (_, cell, _) ->
-    v "(" ^ r_cell name_to_def_map ancestor_is_list cell ^ v ")"
+    (if depth = 0 then v "(" else Rope.empty)
+    ^ r_tuple depth name_to_def_map ancestor_is_list cell
+    ^ if depth = 0 then v ")" else Rope.empty
   | List (_, type_expr, _) ->
-    v "Vec" ^ v "<" ^ r_type_expr name_to_def_map true type_expr ^ v ">"
+    v "Vec" ^ v "<"
+    ^ r_type_expr (depth + 1) name_to_def_map true type_expr
+    ^ v ">"
   | Option (_, type_expr, _) ->
     v "Option" ^ v "<"
-    ^ r_type_expr name_to_def_map ancestor_is_list type_expr
+    ^ r_type_expr (depth + 1) name_to_def_map ancestor_is_list type_expr
     ^ v ">"
-  | Name (_, name_te, _) -> r_name name_to_def_map ancestor_is_list name_te
+  | Name (_, name_and_type_exprs, _) ->
+    r_name depth name_to_def_map ancestor_is_list name_and_type_exprs
   | Tvar (_, tvar) -> v (to_camel_case tvar)
   | Nullable _ | Shared _ | Wrap _ -> assert false
 
 (* translate sum type (aka algebraic datatype, Rust enum) *)
-and r_sum name_to_def_map ancestor_is_list variants =
+and r_sum depth name_to_def_map ancestor_is_list variants =
   let ss =
     List.map
       (fun variant ->
@@ -160,7 +159,7 @@ and r_sum name_to_def_map ancestor_is_list variants =
           | None -> s
           | Some type_expr ->
             s ^ v "("
-            ^ r_type_expr name_to_def_map ancestor_is_list type_expr
+            ^ r_type_expr (depth + 1) name_to_def_map ancestor_is_list type_expr
             ^ v ")"
         )
       )
@@ -169,19 +168,21 @@ and r_sum name_to_def_map ancestor_is_list variants =
   Rope.concat ~sep:(v ",") ss ^ v ","
 
 (* translate an element of a tuple *)
-and r_cell name_to_def_map ancestor_is_list cell =
+and r_tuple depth name_to_def_map ancestor_is_list cell =
   let ss =
     List.map
       (fun (_, type_expr, _) ->
-        let expr = r_type_expr name_to_def_map ancestor_is_list type_expr in
-        expr
+        let expr =
+          r_type_expr (depth + 1) name_to_def_map ancestor_is_list type_expr
+        in
+        (if depth = 0 then v "pub " else Rope.empty) ^ expr
       )
       cell
   in
   Rope.concat ~sep:(v ",") ss
 
 (* translate a record (Rust struct) *)
-and r_record name_to_def_map ancestor_is_list fields =
+and r_record depth name_to_def_map ancestor_is_list fields =
   let ss =
     List.map
       (fun field ->
@@ -189,7 +190,7 @@ and r_record name_to_def_map ancestor_is_list fields =
         | `Field simple_field ->
           let _, (name, _, _), type_expr = simple_field in
           v "pub " ^ v name ^ v ":"
-          ^ r_type_expr name_to_def_map ancestor_is_list type_expr
+          ^ r_type_expr (depth + 1) name_to_def_map ancestor_is_list type_expr
         | `Inherit _ -> raise (NotSupported "inheritance")
       )
       fields
@@ -197,29 +198,31 @@ and r_record name_to_def_map ancestor_is_list fields =
   Rope.concat ~sep:(v ",") ss ^ v ","
 
 (* translate type aliasing and parametric type instantiation *)
-and r_name name_to_def_map ancestor_is_list (_, name, type_exprs) =
+and r_name depth name_to_def_map ancestor_is_list (_, name, type_exprs) =
   match List.assoc_opt name builtins with
   | Some builtin_name ->
     (* builtin types are not parameterized *)
     assert (List.is_empty type_exprs);
     v builtin_name
   | None ->
-    let e = v (to_camel_case name) in
-    let e_box =
+    let camel_name = v (to_camel_case name) in
+    let maybe_box =
       if
         SM.mem name name_to_def_map
         (* recursive references *)
         && not ancestor_is_list (* all ancestor types are not a list *)
-      then v "Box<" ^ e ^ v ">"
-      else (* Box not necessary *) e
+      then v "Box<" ^ camel_name ^ v ">"
+      else (* Box not necessary *) camel_name
     in
-    let tes =
+    let bracketed_type_exprs =
       match type_exprs with
       | [] -> Rope.empty
       | _ ->
-        let tes =
-          List.map (r_type_expr name_to_def_map ancestor_is_list) type_exprs
+        let type_exprs =
+          List.map
+            (r_type_expr (depth + 1) name_to_def_map ancestor_is_list)
+            type_exprs
         in
-        v "<" ^ Rope.concat ~sep:(v ",") tes ^ v ">"
+        v "<" ^ Rope.concat ~sep:(v ",") type_exprs ^ v ">"
     in
-    e_box ^ tes
+    maybe_box ^ bracketed_type_exprs
