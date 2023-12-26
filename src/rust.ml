@@ -81,13 +81,13 @@ and r_item name_to_def_map (Type type_def) =
     (* e.g. translate {[ let x = [ A | B ] ]} to {[ pub enum X(A,B,) ]} *)
     attribute ^ v "\n" ^ v "pub enum" ^ v " " ^ camel_name ^ type_params ^ expr
   | Record _ ->
-    (* e.g. translate {[ type x = { y : int } ]} to {[ pub struct X { y : i64, }
-       ]} *)
+    (* e.g. translate {[ type x = { y : int } ]} to {[ pub struct X { pub y :
+       i64, } ]} *)
     attribute ^ v "\n" ^ v "pub struct" ^ v " " ^ camel_name ^ type_params
     ^ expr
   | Tuple _ ->
-    (* e.g. translate {[ type x = (int * float) ]} to {[ pub struct X(i64,f64);
-       ]} *)
+    (* e.g. translate {[ type x = (int * float) ]} to {[ pub struct X(pub
+       i64,pub f64); ]} *)
     attribute ^ v "\n" ^ v "pub struct" ^ v " " ^ camel_name ^ type_params
     ^ expr ^ v ";"
   | Option _
