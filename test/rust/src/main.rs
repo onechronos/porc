@@ -32,7 +32,6 @@ fn main() {
     };
     let d = test::D::A(true);
     let e = test::E(40001, -7e7);
-    // pub elements
     let f = test::E(1234, 100e100);
     let g = test::G::G1(true);
     let h = test::H::G2(test::D::A(true) /* copy(d) */);
@@ -53,7 +52,6 @@ fn main() {
         ]),
         test::Sexpr::Atom("+++".to_string()),
     ]);
-    // extraneous parens
     let t = test::Tree::Node(
         Box::new(test::Tree::Leaf(1.1)),
         2.2,
