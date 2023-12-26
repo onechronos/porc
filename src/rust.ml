@@ -5,28 +5,7 @@ open Common
 let builtins =
   [ ("int", "i64"); ("float", "f64"); ("bool", "bool"); ("string", "String") ]
 
-(* @see <https://github.com/ahrefs/atd/blob/master/atdj/src/atdj_names.ml#L4>
-   copied *)
-let to_camel_case (s : string) =
-  let res = Bytes.of_string s in
-  let offset = ref 0 in
-  let upper = ref true in
-  let f = function
-    | '_' -> upper := true
-    | ('0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9') as x ->
-      upper := true;
-      Bytes.set res !offset x;
-      incr offset
-    | _ as x ->
-      if !upper then (
-        Bytes.set res !offset (Char.uppercase_ascii x);
-        upper := false
-      )
-      else Bytes.set res !offset x;
-      incr offset
-  in
-  String.iter f s;
-  Bytes.to_string (Bytes.sub res 0 !offset)
+let to_camel_case = Camelsnakekebab.upper_camel_case
 
 module SM = Stdlib.Map.Make (String)
 
