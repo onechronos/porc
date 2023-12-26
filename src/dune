@@ -1,3 +1,5 @@
-(executable (name porc)
+(executable
+ (name porc)
+ (public_name porc)
  (libraries atd jane_rope cmdliner camelsnakekebab)
 )
