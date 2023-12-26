@@ -1,0 +1,8 @@
+[package]
+name = "test-rust-porc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+binprot = { git = "ssh://git@github.com/LaurentMazare/binprot-rs.git" } 
+

@@ -7,13 +7,15 @@ type d = [
 ]
 type e = (int * float)
 type f = e
-type 'a g = [ Apple of 'a | Dell of d ]
+type 'a g = [ G1 of 'a | G2 of d ]
 type h = int g
 type i = int
 type m = {
   h : h;
   fg : float g
 }
+type j = [ I of int | K of k ]
+type k = [ S of string | J of j ]
 type sexpr = [
   | Atom of string
   | List of sexpr list
@@ -22,6 +24,21 @@ type tree = [
   | Leaf of float
   | Node of (tree * float * tree)
 ] 
+type everything = [
+  | AA of a
+  | BB of b
+  | CC of c
+  | DD of d
+  | EE of e
+  | FF of f
+  | GG of bool g
+  | HH of h
+  | II of i
+  | MM of m
+  | JJ of j
+  | KK of k
+  | SS of sexpr
+  | TT of tree
+]
 
-type j = [ I of int | K of k ]
-type k = [ S of string | J of j ]
+type el = { el : everything list }
