@@ -99,18 +99,18 @@ and r_item name_to_def_map (Type type_def) =
 
   match type_expr with
   | Sum _ ->
-    (* e.g. translate {[ let x = [ A | B ] ]} to {[ enum X(A,B,) ]} *)
+    (* e.g. translate {[ let x = [ A | B ] ]} to {[ pub enum X(A,B,) ]} *)
     attribute ^ v "\n" ^ v "pub enum" ^ v " "
     ^ v (to_camel_case name)
     ^ type_params ^ expr
   | Record _ ->
-    (* e.g. translate {[ type x = { y : int } ]} to {[ struct X { y : i64, }
+    (* e.g. translate {[ type x = { y : int } ]} to {[ pub struct X { y : i64, }
        ]} *)
     attribute ^ v "\n" ^ v "pub struct" ^ v " "
     ^ v (to_camel_case name)
     ^ type_params ^ expr
   | Tuple _ ->
-    (* e.g. translate {[ type x = (int * float) ]} to {[ struct X(i64,f64);
+    (* e.g. translate {[ type x = (int * float) ]} to {[ pub struct X(i64,f64);
        ]} *)
     attribute ^ v "\n" ^ v "pub struct" ^ v " "
     ^ v (to_camel_case name)
@@ -173,7 +173,8 @@ and r_cell name_to_def_map ancestor_is_list cell =
   let ss =
     List.map
       (fun (_, type_expr, _) ->
-        r_type_expr name_to_def_map ancestor_is_list type_expr
+        let expr = r_type_expr name_to_def_map ancestor_is_list type_expr in
+        expr
       )
       cell
   in
@@ -187,7 +188,7 @@ and r_record name_to_def_map ancestor_is_list fields =
         match field with
         | `Field simple_field ->
           let _, (name, _, _), type_expr = simple_field in
-          v name ^ v ":"
+          v "pub " ^ v name ^ v ":"
           ^ r_type_expr name_to_def_map ancestor_is_list type_expr
         | `Inherit _ -> raise (NotSupported "inheritance")
       )
