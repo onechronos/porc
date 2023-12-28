@@ -129,7 +129,9 @@ and r_type_expr depth name_to_def_map ancestor_is_list type_expr =
   | Name (_, name_and_type_exprs, _) ->
     r_name depth name_to_def_map ancestor_is_list name_and_type_exprs
   | Tvar (_, tvar) -> v (to_camel_case tvar)
-  | Nullable _ | Shared _ | Wrap _ -> assert false
+  | Nullable _ -> raise (NotSupported "nullable")
+  | Shared _ -> raise (NotSupported "shared")
+  | Wrap _ -> raise (NotSupported "wrap")
 
 (* translate sum type (aka algebraic datatype, Rust enum) *)
 and r_sum depth name_to_def_map ancestor_is_list variants =

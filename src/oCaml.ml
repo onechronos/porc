@@ -51,7 +51,9 @@ and r_type_expr type_expr =
   | Option (_, type_expr, _) -> v "(" ^ r_type_expr type_expr ^ v ") option"
   | Name (_, name_te, _) -> r_name name_te
   | Tvar (_, tvar) -> v "'" ^ v tvar
-  | Nullable _ | Shared _ | Wrap _ -> raise (NotSupported "inheritance")
+  | Nullable _ -> raise (NotSupported "nullable")
+  | Shared _ -> raise (NotSupported "shared")
+  | Wrap _ -> raise (NotSupported "wrap")
 
 and r_sum variants =
   let ss =
