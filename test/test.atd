@@ -1,29 +1,63 @@
+(* list *)
 type a = float list
+
+(* option *)
 type b = a option
-type c = { x : int; y : string }
+
+(* record *)
+type c = { x : int; y : string; z : unit }
+
+(* sum *)
 type d = [
   | A of bool
   | B of b
 ]
+
+(* tuple *)
 type e = (int * float)
+
+(* alias of complex type *)
 type f = e
+
+(* parametric *)
 type 'a g = [ G1 of 'a | G2 of d ]
+
+(* parametric instantiation *)
 type h = int g
+
+(* alias of builtin *)
 type i = int
+
+(* mutually recursive types *)
+type j = [ I of int | K of k ]
+type k = [ S of string | J of j ]
+
+(* parametric instantiation in record *)
 type m = {
   h : h;
   fg : float g
 }
-type j = [ I of int | K of k ]
-type k = [ S of string | J of j ]
+
+(* anonymous record *)
+type n = [ X of { i : int } ]
+
+(* anonymous sum NOT SUPPORTED *)
+(* type o = { z : [ Z | Y of bool ] } *)
+
+(* recursive *)
 type sexpr = [
   | Atom of string
   | List of sexpr list
 ]
+
+(* recursive *)
 type tree = [
   | Leaf of float
   | Node of (tree * float * tree)
 ] 
+
+(* [everything] and [el] used to create one value
+   containing values of all of the types above *)
 type everything = [
   | AA of a
   | BB of b
@@ -34,9 +68,10 @@ type everything = [
   | GG of bool g
   | HH of h
   | II of i
-  | MM of m
   | JJ of j
   | KK of k
+  | MM of m
+  | NN of n
   | SS of sexpr
   | TT of tree
 ]

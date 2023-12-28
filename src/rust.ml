@@ -3,7 +3,13 @@ open Common
 
 (* mapping from atd builtins to their Rust counterparts *)
 let builtins =
-  [ ("int", "i64"); ("float", "f64"); ("bool", "bool"); ("string", "String") ]
+  [
+    ("unit", "()");
+    ("int", "i64");
+    ("float", "f64");
+    ("bool", "bool");
+    ("string", "String");
+  ]
 
 let to_camel_case = Camelsnakekebab.upper_camel_case
 
@@ -136,10 +142,14 @@ and r_sum depth name_to_def_map ancestor_is_list variants =
           let s = v name in
           match type_expr_opt with
           | None -> s
-          | Some type_expr ->
-            s ^ v "("
-            ^ r_type_expr (depth + 1) name_to_def_map ancestor_is_list type_expr
-            ^ v ")"
+          | Some type_expr -> (
+            let te =
+              r_type_expr (depth + 1) name_to_def_map ancestor_is_list type_expr
+            in
+            match type_expr with
+            | Record _ -> s ^ te
+            | _ -> s ^ v "(" ^ te ^ v ")"
+          )
         )
       )
       variants
@@ -168,7 +178,8 @@ and r_record depth name_to_def_map ancestor_is_list fields =
         match field with
         | `Field simple_field ->
           let _, (name, _, _), type_expr = simple_field in
-          v "pub " ^ v name ^ v ":"
+          (if depth = 0 then v "pub " else Rope.empty)
+          ^ v name ^ v ":"
           ^ r_type_expr (depth + 1) name_to_def_map ancestor_is_list type_expr
         | `Inherit _ -> raise (NotSupported "inheritance")
       )

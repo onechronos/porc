@@ -3,16 +3,17 @@ open Test
 let _ =
   let a = [ 1.2; 2e3; -4005. ] in
   let b = Some [ -200.; infinity; 0. ] in
-  let c = { x = 4; y = "foo" } in
+  let c = { x = 4; y = "foo"; z = () } in
   let d = A true in
   let e = (40001, -7e7) in
   let f = (1234, 100e100) in
   let g = G1 true in
   let h = G2 d in
   let i = 0 in
-  let m = { h = G1 314; fg = G1 neg_infinity } in
   let j = I 88 in
   let k = J j in
+  let m = { h = G1 314; fg = G1 neg_infinity } in
+  let n = X { i = 42 } in
   let s =
     List
       [
@@ -34,9 +35,10 @@ let _ =
           GG g;
           HH h;
           II i;
-          MM m;
           JJ j;
           KK k;
+          MM m;
+          NN n;
           SS s;
           TT t;
         ];

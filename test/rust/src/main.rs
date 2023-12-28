@@ -29,6 +29,7 @@ fn main() {
     let c = test::C {
         x: 4,
         y: "foo".to_string(),
+        z: (),
     };
     let d = test::D::A(true);
     let e = test::E(40001, -7e7);
@@ -36,12 +37,13 @@ fn main() {
     let g = test::G::G1(true);
     let h = test::H::G2(test::D::A(true) /* copy(d) */);
     let i = 0;
+    let j = test::J::I(88);
+    let k = test::K::J(Box::new(test::J::I(88) /* copy(j) */));
     let m = test::M {
         h: test::H::G1(314),
         fg: test::G::G1(f64::NEG_INFINITY),
     };
-    let j = test::J::I(88);
-    let k = test::K::J(Box::new(test::J::I(88) /* copy(j) */));
+    let n = test::N::X { i: 42 };
     let s = test::Sexpr::List(vec![
         test::Sexpr::List(vec![
             test::Sexpr::List(vec![
@@ -71,14 +73,15 @@ fn main() {
     let gg = test::Everything::GG(g);
     let hh = test::Everything::HH(h);
     let ii = test::Everything::II(i);
-    let mm = test::Everything::MM(m);
     let jj = test::Everything::JJ(j);
     let kk = test::Everything::KK(k);
+    let mm = test::Everything::MM(m);
+    let nn = test::Everything::NN(n);
     let ss = test::Everything::SS(s);
     let tt = test::Everything::TT(t);
 
     let el = test::El {
-        el: vec![aa, bb, cc, dd, ee, ff, gg, hh, ii, mm, jj, kk, ss, tt],
+        el: vec![aa, bb, cc, dd, ee, ff, gg, hh, ii, jj, kk, mm, nn, ss, tt],
     };
     test_roundtrip(el);
 }

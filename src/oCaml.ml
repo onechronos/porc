@@ -46,12 +46,12 @@ and r_type_expr type_expr =
   match type_expr with
   | Sum (_, variants, _) -> r_sum variants
   | Record (_, fields, _) -> r_record fields
-  | Tuple (_, cell, _) -> r_cell cell
+  | Tuple (_, tuple, _) -> r_tuple tuple
   | List (_, type_expr, _) -> v "(" ^ r_type_expr type_expr ^ v ") list"
   | Option (_, type_expr, _) -> v "(" ^ r_type_expr type_expr ^ v ") option"
   | Name (_, name_te, _) -> r_name name_te
   | Tvar (_, tvar) -> v "'" ^ v tvar
-  | Nullable _ | Shared _ | Wrap _ -> assert false
+  | Nullable _ | Shared _ | Wrap _ -> raise (NotSupported "inheritance")
 
 and r_sum variants =
   let ss =
@@ -63,8 +63,7 @@ and r_sum variants =
           let s = v name in
           match type_expr_opt with
           | None -> s
-          | Some type_expr ->
-            s ^ v " of " ^ v "(" ^ r_type_expr type_expr ^ v ")"
+          | Some type_expr -> s ^ v " of " ^ r_type_expr type_expr
         )
       )
       variants
@@ -72,8 +71,8 @@ and r_sum variants =
   Rope.concat ~sep:(v "|") ss
 
 (* translate an element of a tuple *)
-and r_cell cell =
-  let ss = List.map (fun (_, type_expr, _) -> r_type_expr type_expr) cell in
+and r_tuple tuple =
+  let ss = List.map (fun (_, type_expr, _) -> r_type_expr type_expr) tuple in
   v "(" ^ Rope.concat ~sep:(v "*") ss ^ v ")"
 
 and r_record fields =
