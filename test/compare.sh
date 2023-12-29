@@ -1,12 +1,12 @@
 #!/bin/bash
 
 dune exec -- ../src/porc.exe -l rust  -i test.atd -o rust/src/test.rs
-dune exec -- ../src/porc.exe -l ocaml -i test.atd -o ocaml/test.ml
+# dune exec -- ../src/porc.exe -l ocaml -i test.atd -o ocaml/test.ml
 
 rm -f rust.out ocaml.out
 
 pushd rust
-cargo run test > ../rust.out
+cargo run main > ../rust.out
 popd
 
 pushd ocaml/
