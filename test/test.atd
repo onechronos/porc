@@ -56,6 +56,8 @@ type tree = [
   | Node of (tree * float * tree)
 ] 
 
+type q <ocaml module="Q" t="t"> <rust module="q" t="t"> = abstract
+
 (* [everything] and [el] used to create one value
    containing values of all of the types above *)
 type everything = [
@@ -72,6 +74,7 @@ type everything = [
   | KK of k
   | MM of m
   | NN of n
+  | QQ of q
   | SS of sexpr
   | TT of tree
 ]

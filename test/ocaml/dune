@@ -1,4 +1,13 @@
 (rule
+  (target q.ml)
+  (deps
+    (:gen %{workspace_root}/src/porc.exe)
+    (:atd %{workspace_root}/test/q.atd)
+  )
+  (action (run %{gen} -l ocaml -i %{atd} -o %{target}))
+)
+
+(rule
   (target test.ml)
   (deps
     (:gen %{workspace_root}/src/porc.exe)

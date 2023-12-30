@@ -21,6 +21,7 @@ let _ =
         Atom "+++";
       ]
   in
+  let q = Q.({ num = 1; den = 3 }) in
   let t = Node (Leaf 1.1, 2.2, Node (Leaf 11., 22., Leaf 33.)) in
   let el =
     {
@@ -39,6 +40,7 @@ let _ =
           KK k;
           MM m;
           NN n;
+          QQ q;
           SS s;
           TT t;
         ];

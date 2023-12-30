@@ -3,6 +3,8 @@ use binprot::{BinProtRead, BinProtWrite};
 mod test;
 use test::*;
 
+mod q;
+
 fn test_roundtrip<T>(t_in: T)
 where
     T: BinProtRead + BinProtWrite + PartialEq + std::fmt::Debug,
@@ -45,6 +47,7 @@ fn main() {
         fg: G::G1(f64::NEG_INFINITY),
     };
     let n = N::X { i: 42 };
+    let q = Q { num: 1, den: 3 };
     let s = Sexpr::List(vec![
         Sexpr::List(vec![
             Sexpr::List(vec![
@@ -78,11 +81,14 @@ fn main() {
     let kk = Everything::KK(k);
     let mm = Everything::MM(m);
     let nn = Everything::NN(n);
+    let qq = Everything::QQ(q);
     let ss = Everything::SS(s);
     let tt = Everything::TT(t);
 
     let el = El {
-        el: vec![aa, bb, cc, dd, ee, ff, gg, hh, ii, jj, kk, mm, nn, ss, tt],
+        el: vec![
+            aa, bb, cc, dd, ee, ff, gg, hh, ii, jj, kk, mm, nn, qq, ss, tt,
+        ],
     };
     test_roundtrip(el);
 }

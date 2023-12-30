@@ -1,6 +1,24 @@
 open Atd.Ast
 open Common
 
+type type_reference = {
+  module_ : string; (* the external module containing the type *)
+  type_ : string; (* the name of the type *)
+}
+
+let type_reference : annot -> type_reference option =
+ fun annot ->
+  match List.assoc_opt "ocaml" annot with
+  | None -> None
+  | Some (_, fields) -> (
+    match (List.assoc_opt "module" fields, List.assoc_opt "t" fields) with
+    | Some (_, Some module_), Some (_, Some type_) -> Some { module_; type_ }
+    | _ ->
+      failwith
+        "expecting ocaml annotation with structure <ocaml module=\"Xyz\" \
+         t=\"abc\">"
+  )
+
 let rec r_full_module (_, body) =
   (* auto-generation comment *)
   let comment = v "(* auto-generatoed by porc -- DO NOT EDIT *)" in
@@ -27,20 +45,31 @@ and r_items is_recursive items =
 
 and r_item is_first (Type type_def) =
   (* an item is a type definition *)
-  let _, (name, type_params, _), type_expr = type_def in
-  (* type parameters, as they appear in the left-hand side alongside the name of
-     the type *)
-  let type_params =
-    match type_params with
-    | [] -> Rope.empty
-    | _ ->
-      let tick_params = List.map (fun p -> v "'" ^ v p) type_params in
-      v "(" ^ Rope.concat ~sep:(v ",") tick_params ^ v ")"
+  let _, (name, type_params, annot), type_expr = type_def in
+  let item =
+    match type_reference annot with
+    | Some reference ->
+      (* this is a reference to a type in another module; ignore [type_expr]
+         which is likely "abstract" -- but we don't check that. *)
+      v "type " ^ v name ^ v "=" ^ v reference.module_ ^ v "."
+      ^ v reference.type_
+    | None ->
+      (* type parameters, as they appear in the left-hand side alongside the
+         name of the type *)
+      let type_params =
+        match type_params with
+        | [] -> Rope.empty
+        | _ ->
+          let tick_params = List.map (fun p -> v "'" ^ v p) type_params in
+          v "(" ^ Rope.concat ~sep:(v ",") tick_params ^ v ")"
+      in
+      let expr = r_type_expr type_expr in
+      let type_keyword =
+        match is_first with true -> "type" | false -> "and"
+      in
+      v type_keyword ^ v " " ^ type_params ^ v name ^ v "=" ^ expr
   in
-  let expr = r_type_expr type_expr in
-  let type_keyword = match is_first with true -> "type" | false -> "and" in
-  v type_keyword ^ v " " ^ type_params ^ v name ^ v "=" ^ expr
-  ^ v "[@@deriving bin_io]"
+  item ^ v "[@@deriving bin_io]"
 
 and r_type_expr type_expr =
   match type_expr with
